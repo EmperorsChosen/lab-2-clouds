@@ -1,0 +1,237 @@
+/* === Загальні стилі === */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: url("../images/background.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color: #333;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("../images/background.jpg") no-repeat center center fixed;
+  background-size: cover;
+  filter: blur(8px); /* Розмиття */
+  z-index: -1;
+  transform: scale(1.1); /* Легке збільшення */
+}
+
+h1 {
+  font-size: 2.5em;
+  text-align: center;
+  color: #1d1d1f;
+  margin-top: 20px;
+}
+
+a {
+  text-decoration: none;
+  color: #007aff; /* Apple-синій */
+  font-size: 1.2em; /* Збільшення тексту */
+  font-weight: bold; /* Жирний текст */
+  text-align: center;
+  display: inline-block; /* Робимо її як кнопку */
+  margin: 20px 0; /* Відступи зверху і знизу */
+  padding: 10px 20px;
+  border: 2px solid #007aff;
+  border-radius: 8px; /* Згладжені кути */
+  background: rgba(255, 255, 255, 0.8); /* Напівпрозоре біле тло */
+  transition: all 0.3s ease; /* Плавні переходи */
+}
+
+a:hover {
+  background: #007aff;
+  color: #fff;
+  border-color: #005fcb;
+  text-decoration: none;
+}
+
+a.button-home {
+  margin-top: 30px;
+}
+
+
+/* === Центрування форми === */
+form {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8); /* Напівпрозоре біле тло */
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #1d1d1f;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #d1d1d6;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 5px rgba(0, 122, 255, 0.5);
+}
+
+/* === Кнопка === */
+button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center; /* Центруємо кнопку горизонтально */
+  margin-top: 20px;
+}
+
+a.button-home {
+  text-decoration: none;
+  color: #007aff;
+  font-size: 1.2em;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: 2px solid #007aff;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+}
+
+a.button-home:hover {
+  background: #007aff;
+  color: #fff;
+  border-color: #005fcb;
+}
+
+button:hover {
+  background: #005fcb;
+  box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2);
+}
+
+/* === Flash-повідомлення === */
+ul {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.flash-success {
+  background-color: #daf8e3;
+  color: #1c7d4f;
+  border-left: 5px solid #1c7d4f;
+  padding: 10px;
+  animation: fadeIn 0.5s ease;
+}
+
+.flash-danger {
+  background-color: #ffe3e3;
+  color: #b00020;
+  border-left: 5px solid #b00020;
+  padding: 10px;
+  animation: fadeIn 0.5s ease;
+}
+
+/* === Анімації === */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+      transform: translateY(-10px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+
+header {
+  background: #f0f0f0; /* Світло-сірий фон */
+  color: #333; /* Темно-сірий текст */
+  padding: 10px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Легка тінь */
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 2em;
+  font-weight: bold;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  letter-spacing: 1px;
+  margin: 0;
+  color: #007aff; /* Синій колір назви */
+}
+
+/* Відступ для основного контенту */
+.content {
+  margin-top: 80px; /* Відступ від шапки */
+  display: flex;
+  flex-direction: column; /* Розташування елементів по вертикалі */
+  align-items: center; /* Центрування елементів горизонтально */
+  justify-content: flex-start; /* Початок зверху */
+  min-height: calc(100vh - 80px); /* Висота екрану мінус шапка */
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.centered-container {
+  display: flex;
+  justify-content: center; /* Центруємо кнопку горизонтально */
+  align-items: center; /* Центруємо кнопку вертикально, якщо потрібно */
+  margin-top: 20px; /* Відступ від інших елементів */
+}
+
+/* Стиль для фону тексту */
+.highlight-text {
+  background: rgba(255, 255, 255, 0.8); /* Напівпрозоре біле тло */
+  color: #333; /* Темний текст */
+  padding: 10px 20px; /* Внутрішній відступ */
+  border: 2px solid #007aff; /* Синя рамка */
+  border-radius: 8px; /* Згладжені кути */
+  margin: 20px 0; /* Відступи зверху і знизу */
+  font-size: 1.2em; /* Трохи більший текст */
+  text-align: center; /* Центрування тексту */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Легка тінь */
+}
