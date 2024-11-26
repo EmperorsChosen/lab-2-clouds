@@ -9,7 +9,7 @@ parcel_id = 1
 
 # Перевірка, чи авторизований користувач
 def is_user_authenticated(email):
-    response = requests.post("http://127.0.0.1:5001/login", json={"email": email, "password": "test"})
+    response = requests.post("http://44.204.235.31:5001/login", json={"email": email, "password": "test"})
     return response.status_code == 200
 
 # Додати запит на відправлення посилки
