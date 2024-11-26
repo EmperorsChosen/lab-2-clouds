@@ -7,7 +7,7 @@ app = Flask(__name__)
 parcels = []
 parcel_id = 1
 
-# Перевірка, чи авторизований користувач
+# Перевірка, чи авторизований користувач   ВНЕСТИ ЗМІНИ ДО ПРОЦЕДУРИ ПЕРЕВІРКИ ПАРОЛЯ!!!!!!!!!!!!!!
 def is_user_authenticated(email):
     response = requests.post("http://44.204.235.31:5001/login", json={"email": email, "password": "test"})
     return response.status_code == 200
