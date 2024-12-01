@@ -32,16 +32,20 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "User already exists"}), 400
 
+    role = "admin" if data.get("is_admin") else "user"
+
     new_user = User(
         first_name=data.get("first_name"),
         last_name=data.get("last_name"),
         email=email,
         phone=data.get("phone"),
-        password=data.get("password")
+        password=data.get("password"),
+        role=role
     )
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message": "User registered successfully"}), 201
+
 
 # Вхід
 @app.route('/login', methods=['POST'])
