@@ -33,10 +33,7 @@ def is_user_authenticated(email):
 @app.route('/parcels', methods=['POST'])
 def add_parcel():
     data = request.json
-
-    # Перевірка, чи авторизований користувач
-    if not is_user_authenticated(data.get("user_id")):
-        return jsonify({"error": "Unauthorized"}), 401
+    print(f"Received data: {data}")  # Додано для відлагодження
 
     # Додавання посилки
     new_parcel = Parcel(
@@ -48,6 +45,7 @@ def add_parcel():
     )
     db.session.add(new_parcel)
     db.session.commit()
+    print(f"Parcel added: {new_parcel.id}")  # Логування успішного додавання
     return jsonify({"message": "Parcel request created", "parcel": {
         "id": new_parcel.id,
         "user_id": new_parcel.user_id,
@@ -56,6 +54,7 @@ def add_parcel():
         "insurance_price": new_parcel.insurance_price,
         "status": new_parcel.status
     }}), 201
+
 
 
 # Відстежити статус посилки
