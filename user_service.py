@@ -18,6 +18,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     phone = db.Column(db.String(15), nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(10), nullable=False, default="user") 
 
 # Ініціалізація бази даних
 with app.app_context():
