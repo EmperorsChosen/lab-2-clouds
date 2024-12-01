@@ -235,3 +235,25 @@ header h1 {
   text-align: center; /* Центрування тексту */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Легка тінь */
 }
+
+/* Стиль для списку посилок */
+.content ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.content ul li {
+    background-color: white; /* Білий фон */
+    border: 1px solid #ccc; /* Світло-сірий бордюр */
+    border-radius: 8px; /* Закруглені кути */
+    padding: 15px; /* Відступи всередині */
+    margin-bottom: 10px; /* Відстань між елементами */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Легка тінь */
+    font-family: Arial, sans-serif; /* Зручний шрифт */
+}
+
+.content ul li strong {
+    display: block;
+    margin-bottom: 5px; /* Відступ між полями */
+    color: #333; /* Темно-сірий текст */
+}
