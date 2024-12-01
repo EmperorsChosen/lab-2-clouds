@@ -69,19 +69,17 @@ def add_parcel():
 
     if request.method == 'POST':
         data = {
-            "user_id": session.get('user_id'),
+            "user_id": session['user_id'],  # Використовуємо user_id із сесії
             "description": request.form['description'],
             "destination": request.form['destination'],
-            "insurance_cost": float(request.form['insurance_cost']),
-            "status": "Pending"
+            "insurance_price": float(request.form['insurance_price']),  # Отримуємо значення з форми
         }
         response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
         if response.status_code == 201:
             flash('Parcel added successfully!', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard'))  # Повертаємося на дашборд
         else:
-            flash('Failed to add parcel.', 'danger')
-
+            flash('Failed to add parcel: ' + response.json().get("error", "Unknown error"), 'danger')
     return render_template('add_parcel.html')
 
 @app.route('/logout')
