@@ -18,7 +18,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     phone = db.Column(db.String(15), nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(10), nullable=False, default="user") 
+    role = db.Column(db.String(10), default="user")  # Роль: "user" або "admin"
 
 # Ініціалізація бази даних
 with app.app_context():
@@ -32,19 +32,18 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "User already exists"}), 400
 
-    role = "admin" if data.get("is_admin") else "user"
-
     new_user = User(
         first_name=data.get("first_name"),
         last_name=data.get("last_name"),
         email=email,
         phone=data.get("phone"),
         password=data.get("password"),
-        role=role
+        role="admin" if data.get("is_admin") else "user"
     )
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message": "User registered successfully"}), 201
+
 
 
 # Вхід
@@ -58,9 +57,10 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
     return jsonify({
         "message": "Login successful",
-        "user_id": user.id,  # Передаємо user_id
-        "role": user.role  # Передаємо роль
+        "user_id": user.id,
+        "role": user.role
     }), 200
+
 
 
 if __name__ == '__main__':
