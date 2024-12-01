@@ -56,7 +56,12 @@ def login():
     user = User.query.filter_by(email=email, password=password).first()
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
-    return jsonify({"message": "Login successful"}), 200
+    return jsonify({
+        "message": "Login successful",
+        "user_id": user.id,  # Передаємо user_id
+        "role": user.role  # Передаємо роль
+    }), 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
