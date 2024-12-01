@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import requests
 
 app = Flask(__name__)
@@ -43,6 +43,9 @@ def login():
         }
         response = requests.post(f"{USERS_SERVICE_URL}/login", json=data)
         if response.status_code == 200:
+            user_data = response.json()
+            session['user_id'] = user_data['user_id']  # Зберігаємо user_id у сесії
+            session['role'] = user_data['role']  # Зберігаємо роль
             flash('Login successful!', 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -50,6 +53,7 @@ def login():
             flash(f'Login failed: {error_message}', 'danger')
             return redirect(url_for('login'))
     return render_template('login.html')
+
 
 @app.route('/add-parcel', methods=['GET', 'POST'])
 def add_parcel():
