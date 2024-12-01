@@ -1,9 +1,16 @@
 <form method="post">
     <label for="description">Description:</label>
     <input type="text" name="description" required>
+
     <label for="destination">Destination:</label>
     <input type="text" name="destination" required>
+
     <label for="insurance_price">Insurance Cost:</label>
     <input type="number" name="insurance_price" step="0.01" required>
+
     <button type="submit">Add Parcel</button>
 </form>
+
+<div class="button-container">
+    <a href="{{ url_for('dashboard') }}" class="button-home">Back to Dashboard</a>
+</div>
