@@ -74,17 +74,24 @@ def track_parcel(parcel_id):
 @app.route('/my-parcels', methods=['GET'])
 def get_user_parcels():
     user_id = request.args.get("user_id")
-
-    # Перевірка, чи авторизований користувач
-    if not is_user_authenticated_by_id(user_id):
-        return jsonify({"error": "Unauthorized"}), 401
+    if not user_id:
+        return jsonify({"error": "User ID not provided"}), 400
 
     # Фільтрування посилок
     user_parcels = Parcel.query.filter_by(user_id=user_id).all()
 
-    # Отримання імені користувача через `users_service`
-    user_info = requests.get(f"http://localhost:5001/get-user/{user_id}").json()
+    # Якщо посилок немає
+    if not user_parcels:
+        return jsonify([])
 
+    # Отримання імені користувача через `users_service`
+    user_info_response = requests.get(f"http://localhost:5001/get-user/{user_id}")
+    if user_info_response.status_code != 200:
+        return jsonify({"error": "User information not found"}), 404
+
+    user_info = user_info_response.json()
+
+    # Формуємо результат для кожної посилки
     return jsonify([{
         "id": parcel.id,
         "first_name": user_info.get("first_name"),
@@ -94,6 +101,7 @@ def get_user_parcels():
         "insurance_price": parcel.insurance_price,
         "status": parcel.status
     } for parcel in user_parcels])
+
 
 
 if __name__ == '__main__':
