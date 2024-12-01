@@ -7,33 +7,55 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Шапка -->
     <header>
         <div class="header-container">
             <h1>DefinetlyNotNewPost</h1>
         </div>
     </header>
 
-    <!-- Основний контент -->
     <div class="content">
         <h1>Welcome to Dashboard</h1>
         <p class="highlight-text">Here you can manage your parcels!</p>
 
-        <!-- Список посилок -->
-        <ul>
-            {% for parcel in parcels %}
-                <li>{{ parcel.id }}: {{ parcel.description }} - {{ parcel.status }}</li>
-            {% endfor %}
-        </ul>
+        <!-- Перевірка, чи є посилки -->
+        {% if parcels %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Description</th>
+                        <th>Destination</th>
+                        <th>Insurance Cost</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for parcel in parcels %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ parcel.first_name }}</td>
+                            <td>{{ parcel.last_name }}</td>
+                            <td>{{ parcel.description }}</td>
+                            <td>{{ parcel.destination }}</td>
+                            <td>{{ parcel.insurance_price }}</td>
+                            <td>{{ parcel.status }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No parcels found.</p>
+        {% endif %}
 
-        <!-- Кнопка назад -->
+        <!-- Кнопки внизу -->
         <div class="button-container">
             <a href="{{ url_for('home') }}" class="button-home">Back to Home</a>
         </div>
         <div class="button-container">
             <a href="{{ url_for('add_parcel') }}" class="button-home">Add Parcel</a>
         </div>
-
     </div>
 </body>
 </html>
