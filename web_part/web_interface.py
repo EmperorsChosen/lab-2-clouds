@@ -58,24 +58,28 @@ def login():
 @app.route('/add-parcel', methods=['GET', 'POST'])
 def add_parcel():
     if request.method == 'POST':
-        data = {
-            "user_id": session['user_id'],  # Отримуємо user_id із сесії
-            "description": request.form['description'],
-            "destination": request.form['destination'],
-            "insurance_cost": request.form['insurance_cost'],
-            "status": "pending"
-        }
-        response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
-        
-        if response.status_code == 201:
-            flash('Parcel added successfully!', 'success')
-            return redirect(url_for('dashboard'))  # Повертаємося на дашборд
-        else:
-            error_message = response.json().get("error", "Failed to add parcel")
-            flash(f'Error: {error_message}', 'danger')
+        try:
+            data = {
+                "user_id": session['user_id'],  # Отримуємо user_id із сесії
+                "description": request.form['description'],
+                "destination": request.form['destination'],
+                "insurance_cost": float(request.form['insurance_cost']),  # Перетворення на число
+                "status": "pending"
+            }
+            response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
+            
+            if response.status_code == 201:
+                flash('Parcel added successfully!', 'success')
+                return redirect(url_for('dashboard'))  # Повертаємося на дашборд
+            else:
+                error_message = response.json().get("error", "Failed to add parcel")
+                flash(f'Error: {error_message}', 'danger')
+        except KeyError as e:
+            flash(f'Missing field: {e}', 'danger')  # Обробка відсутнього поля
+        except ValueError:
+            flash('Invalid insurance cost. Please enter a valid number.', 'danger')  # Обробка некоректного числа
 
     return render_template('add_parcel.html')  # Відображаємо форму для додавання посилки
-
 
 
 # Сторінка з функціоналом роботи з посилками
