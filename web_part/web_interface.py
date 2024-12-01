@@ -63,24 +63,28 @@ def login():
 
 @app.route('/add-parcel', methods=['GET', 'POST'])
 def add_parcel():
-    if 'user_id' not in session:
-        flash("You need to login to add parcels.", 'danger')
-        return redirect(url_for('login'))
-
     if request.method == 'POST':
-        data = {
-            "user_id": session['user_id'],  # Використовуємо user_id із сесії
-            "description": request.form['description'],
-            "destination": request.form['destination'],
-            "insurance_price": float(request.form['insurance_price']),  # Отримуємо значення з форми
-        }
-        response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
-        if response.status_code == 201:
-            flash('Parcel added successfully!', 'success')
-            return redirect(url_for('dashboard'))  # Повертаємося на дашборд
-        else:
-            flash('Failed to add parcel: ' + response.json().get("error", "Unknown error"), 'danger')
-    return render_template('add_parcel.html')
+        try:
+            data = {
+                "user_id": session.get('user_id'),  # Отримуємо user_id із сесії
+                "description": request.form['description'],
+                "destination": request.form['destination'],
+                "insurance_price": float(request.form['insurance_price']),
+            }
+            # Відправляємо запит до `parcels_service`
+            response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
+
+            if response.status_code == 201:
+                flash('Parcel added successfully!', 'success')
+                return redirect(url_for('dashboard'))  # Редірект на дашборд
+            else:
+                error_message = response.json().get("error", "Unknown error")
+                flash(f'Failed to add parcel: {error_message}', 'danger')
+        except Exception as e:
+            flash(f"An error occurred: {str(e)}", 'danger')
+
+    return render_template('add_parcel.html')  # Повертаємо шаблон додавання посилки
+
 
 @app.route('/logout')
 def logout():
