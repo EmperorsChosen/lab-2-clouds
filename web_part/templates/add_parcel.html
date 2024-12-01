@@ -1,16 +1,48 @@
-<form method="post">
-    <label for="description">Description:</label>
-    <input type="text" name="description" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Parcel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>DefinetlyNotNewPost</h1>
+        </div>
+    </header>
 
-    <label for="destination">Destination:</label>
-    <input type="text" name="destination" required>
+    <div class="content">
+        <h1>Add a Parcel</h1>
 
-    <label for="insurance_price">Insurance Cost:</label>
-    <input type="number" name="insurance_price" step="0.01" required>
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="flash-{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
 
-    <button type="submit">Add Parcel</button>
-</form>
+        <form method="post">
+            <label for="description">Description:</label>
+            <input type="text" name="description" required>
 
-<div class="button-container">
-    <a href="{{ url_for('dashboard') }}" class="button-home">Back to Dashboard</a>
-</div>
+            <label for="destination">Destination:</label>
+            <input type="text" name="destination" required>
+
+            <label for="insurance_price">Insurance Cost:</label>
+            <input type="number" name="insurance_price" step="0.01" required>
+
+            <button type="submit">Add Parcel</button>
+        </form>
+
+        <div class="button-container">
+            <a href="{{ url_for('dashboard') }}" class="button-home">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
