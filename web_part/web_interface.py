@@ -59,17 +59,23 @@ def login():
 def add_parcel():
     if request.method == 'POST':
         data = {
-            "user_id": session['user_id'],  # Отримуємо з сесії
+            "user_id": session['user_id'],  # Отримуємо user_id із сесії
             "description": request.form['description'],
             "destination": request.form['destination'],
-            "insurance_price": request.form['insurance_price']
+            "insurance_cost": request.form['insurance_cost'],
+            "status": "pending"
         }
         response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
+        
         if response.status_code == 201:
             flash('Parcel added successfully!', 'success')
+            return redirect(url_for('dashboard'))  # Повертаємося на дашборд
         else:
-            flash('Error adding parcel: ' + response.json().get("error", "Unknown error"), 'danger')
-    return render_template('add_parcel.html')
+            error_message = response.json().get("error", "Failed to add parcel")
+            flash(f'Error: {error_message}', 'danger')
+
+    return render_template('add_parcel.html')  # Відображаємо форму для додавання посилки
+
 
 
 # Сторінка з функціоналом роботи з посилками
