@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, requests
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_session import Session
+import requests 
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
