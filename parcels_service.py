@@ -14,9 +14,11 @@ db = SQLAlchemy(app)
 class Parcel(db.Model):
     __tablename__ = 'parcels'
     id = db.Column(db.Integer, primary_key=True)
-    user_email = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False) 
     description = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
+    destination = db.Column(db.String(255), nullable=False)  
+    insurance_price = db.Column(db.Float, nullable=False)  
+    status = db.Column(db.String(50), nullable=False, default="Pending")
 
 # Ініціалізація бази даних
 with app.app_context():
