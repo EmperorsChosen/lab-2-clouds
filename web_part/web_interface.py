@@ -75,15 +75,16 @@ def add_parcel():
             response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
 
             if response.status_code == 201:
-                flash('Parcel added successfully!', 'success')
+                flash('Parcel added successfully!', 'success')  # Flash зелене повідомлення
                 return redirect(url_for('dashboard'))  # Редірект на дашборд
             else:
                 error_message = response.json().get("error", "Unknown error")
-                flash(f'Failed to add parcel: {error_message}', 'danger')
+                flash(f'Failed to add parcel: {error_message}', 'danger')  # Flash червоне повідомлення
         except Exception as e:
-            flash(f"An error occurred: {str(e)}", 'danger')
+            flash(f"An error occurred: {str(e)}", 'danger')  # Flash червоне повідомлення при помилці
 
     return render_template('add_parcel.html')  # Повертаємо шаблон додавання посилки
+
 
 
 @app.route('/logout')
