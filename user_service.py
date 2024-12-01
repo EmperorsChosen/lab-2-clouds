@@ -61,6 +61,18 @@ def login():
         "role": user.role
     }), 200
 
+# Отримати інформацію про користувача
+@app.route('/get-user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify({
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email
+    })
 
 
 if __name__ == '__main__':
