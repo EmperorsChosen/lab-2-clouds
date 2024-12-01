@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-import requests
+from flask_session import Session
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
+
 
 USERS_SERVICE_URL = "http://127.0.0.1:5001"
 PARCELS_SERVICE_URL = "http://127.0.0.1:5002"
@@ -43,10 +46,11 @@ def login():
         }
         response = requests.post(f"{USERS_SERVICE_URL}/login", json=data)
         if response.status_code == 200:
-            user_data = response.json()
-            session['user_id'] = user_data['user_id']  # Зберігаємо user_id у сесії
-            session['role'] = user_data['role']  # Зберігаємо роль
+            session['user_id'] = response.json().get("user_id")
+            session['role'] = response.json().get("role")
             flash('Login successful!', 'success')
+            if session['role'] == 'admin':
+                return redirect(url_for('admin_dashboard'))
             return redirect(url_for('dashboard'))
         else:
             error_message = response.json().get("error", "Invalid credentials")
@@ -55,31 +59,37 @@ def login():
     return render_template('login.html')
 
 
+
 @app.route('/add-parcel', methods=['GET', 'POST'])
 def add_parcel():
-    if request.method == 'POST':
-        try:
-            data = {
-                "user_id": session['user_id'],  # Отримуємо user_id із сесії
-                "description": request.form['description'],
-                "destination": request.form['destination'],
-                "insurance_cost": float(request.form['insurance_cost']),  # Перетворення на число
-                "status": "pending"
-            }
-            response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
-            
-            if response.status_code == 201:
-                flash('Parcel added successfully!', 'success')
-                return redirect(url_for('dashboard'))  # Повертаємося на дашборд
-            else:
-                error_message = response.json().get("error", "Failed to add parcel")
-                flash(f'Error: {error_message}', 'danger')
-        except KeyError as e:
-            flash(f'Missing field: {e}', 'danger')  # Обробка відсутнього поля
-        except ValueError:
-            flash('Invalid insurance cost. Please enter a valid number.', 'danger')  # Обробка некоректного числа
+    if 'user_id' not in session:
+        flash("You need to login to add parcels.", 'danger')
+        return redirect(url_for('login'))
 
-    return render_template('add_parcel.html')  # Відображаємо форму для додавання посилки
+    if request.method == 'POST':
+        data = {
+            "user_id": session.get('user_id'),
+            "description": request.form['description'],
+            "destination": request.form['destination'],
+            "insurance_cost": float(request.form['insurance_cost']),
+            "status": "Pending"
+        }
+        response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
+        if response.status_code == 201:
+            flash('Parcel added successfully!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Failed to add parcel.', 'danger')
+
+    return render_template('add_parcel.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()  # Очищення сесії
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('home'))
+
+
 
 
 # Сторінка з функціоналом роботи з посилками
