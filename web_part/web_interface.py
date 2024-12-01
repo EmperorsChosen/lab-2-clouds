@@ -17,12 +17,14 @@ def home():
 def register():
     if request.method == 'POST':
         data = {
-            "first_name": request.form['first_name'],
-            "last_name": request.form['last_name'],
-            "email": request.form['email'],
-            "phone": request.form['phone'],
-            "password": request.form['password']
-        }
+                "first_name": request.form['first_name'],
+                "last_name": request.form['last_name'],
+                "email": request.form['email'],
+                "phone": request.form['phone'],
+                "password": request.form['password'],
+                "is_admin": "is_admin" in request.form  # Передаємо роль
+               }
+
         response = requests.post(f"{USERS_SERVICE_URL}/register", json=data)
         if response.status_code == 201:
             flash('Registration successful!', 'success')
@@ -48,6 +50,22 @@ def login():
             flash(f'Login failed: {error_message}', 'danger')
             return redirect(url_for('login'))
     return render_template('login.html')
+
+@app.route('/add-parcel', methods=['GET', 'POST'])
+def add_parcel():
+    if request.method == 'POST':
+        data = {
+            "user_id": session['user_id'],  # Отримуємо з сесії
+            "description": request.form['description'],
+            "destination": request.form['destination'],
+            "insurance_price": request.form['insurance_price']
+        }
+        response = requests.post(f"{PARCELS_SERVICE_URL}/parcels", json=data)
+        if response.status_code == 201:
+            flash('Parcel added successfully!', 'success')
+        else:
+            flash('Error adding parcel: ' + response.json().get("error", "Unknown error"), 'danger')
+    return render_template('add_parcel.html')
 
 
 # Сторінка з функціоналом роботи з посилками
