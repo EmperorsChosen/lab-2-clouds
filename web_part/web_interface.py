@@ -99,7 +99,29 @@ def logout():
 # Сторінка з функціоналом роботи з посилками
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html')
+    user_id = session.get('user_id')  # Отримуємо user_id із сесії
+    first_name = session.get('first_name')
+    last_name = session.get('last_name')
+
+    # Запит до сервісу посилок
+    try:
+        response = requests.get(f"{PARCELS_SERVICE_URL}/my-parcels", params={"user_id": user_id})
+        if response.status_code == 200:
+            parcels = response.json()
+
+            # Додаємо інформацію про ім'я користувача до кожної посилки
+            for parcel in parcels:
+                parcel["first_name"] = first_name
+                parcel["last_name"] = last_name
+        else:
+            parcels = []
+            flash('Failed to retrieve parcels.', 'danger')
+    except Exception as e:
+        parcels = []
+        flash(f'An error occurred: {str(e)}', 'danger')
+
+    return render_template('dashboard.html', parcels=parcels)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
