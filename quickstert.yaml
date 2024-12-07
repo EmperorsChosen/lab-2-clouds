@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for Flask Application with EC2 and PostgreSQL Database
+
+Resources:
+  FlaskEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: test-keys
+      ImageId: ami-0866a3c8686eaeeba
+      SecurityGroupIds:
+        - !Ref FlaskSecurityGroup
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y
+          sudo apt install -y python3 python3-pip git python3.12-venv postgresql postgresql-contrib
+          
+          sudo systemctl start postgresql
+          sudo systemctl enable postgresql
+          sudo -u postgres psql -c "CREATE USER flask_user WITH PASSWORD '12345';"
+          sudo -u postgres psql -c "ALTER USER flask_user CREATEDB;"
+          sudo -u postgres psql -c "CREATE DATABASE parcels_db OWNER flask_user;"
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE parcels_db TO flask_user;"
+          
+          git clone https://github.com/EmperorsChosen/lab-2-clouds.git /home/ubuntu/lab-2-clouds
+          cd /home/ubuntu/lab-2-clouds
+
+          python3 -m venv venv_user
+          source venv_user/bin/activate
+          pip install -r requirements.txt
+          nohup python3 user_service.py > /home/ubuntu/user_service.log 2>&1 &
+          deactivate
+
+          python3 -m venv venv_parcel
+          source venv_parcel/bin/activate
+          pip install -r requirements.txt
+          nohup python3 parcels_service.py > /home/ubuntu/parcels_service.log 2>&1 &
+          deactivate
+
+          cd web_part
+          python3 -m venv venv_web
+          source venv_web/bin/activate
+          pip install -r ../requirements.txt
+          nohup python3 web_interface.py > /home/ubuntu/web_interface.log 2>&1 &
+          deactivate
+
+  FlaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP, HTTPS, and Flask services access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5002
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  InstancePublicIP:
+    Description: Public IP of the Flask EC2 instance
+    Value: !GetAtt FlaskEC2Instance.PublicIp
