@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # Налаштування підключення до бази даних PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://flask_user:12345@localhost:5432/parcels_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://flask_user:unevum86WWII@parcels-db.cdcwqigywyvd.us-east-1.rds.amazonaws.com:5432/parcels_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
