@@ -23,16 +23,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-
-      # 4. Деплой CloudFormation для створення інфраструктури
+      # 3. Деплой CloudFormation
       - name: Deploy CloudFormation Stack
+        id: cloudformation_deploy
         run: |
           aws cloudformation deploy \
             --template-file cloudformation/cloudformation.yml \
             --stack-name flask-app-stack \
             --capabilities CAPABILITY_NAMED_IAM
 
-      # 5. Отримання Public IP EC2-інстансу за тегом
+      # 4. Отримання Public IP EC2
       - name: Get EC2 Public IP
         id: ec2_ip
         run: |
@@ -42,7 +42,7 @@ jobs:
           echo "EC2 Public IP: $PUBLIC_IP"
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-      # 6. Підключення до EC2 та перевірка сервісів
+      # 5. Підключення до EC2 через SSH
       - name: Deploy Application on EC2
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -50,10 +50,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
-            echo "Connecting to EC2 instance..."
             cd /home/ubuntu/lab-2-clouds
             git pull
-            echo "Project updated!"
-            ps aux | grep python
             echo "Deployment complete!"
           EOF
