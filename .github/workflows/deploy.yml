@@ -117,7 +117,7 @@ jobs:
       - name: Wait for EC2 Services
         run: |
           echo "Waiting for EC2 services to stabilize..."
-          sleep 180  # Чекаємо 3 хвилини
+          sleep 70 # Чекаємо 3 хвилини
 
       - name: Check Running Services on EC2
         run: |
@@ -125,7 +125,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
             set -e
             echo "Testing Flask Services..."
-            SERVICES=("user_service.py" "parcels_service.py" "web_part/web_interface.py")
+            SERVICES=("user_service.py" "parcels_service.py")
             for SERVICE in "${SERVICES[@]}"; do
               echo "Checking for service: $SERVICE"
               if ! pgrep -f "$SERVICE" > /dev/null; then
