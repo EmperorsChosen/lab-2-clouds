@@ -38,7 +38,7 @@ jobs:
 
       - name: Commit and Push Artifact
         env:
-          GH_PAT: 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
+          GH_PAT: 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
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
