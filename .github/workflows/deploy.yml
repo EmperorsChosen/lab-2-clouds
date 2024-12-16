@@ -41,6 +41,7 @@ jobs:
         with:
           name: flask-app-artifact
           path: artifacts/
+          retension-days: 1
 
   # 2. Деплой інфраструктури через CloudFormation
   deploy_infrastructure:
