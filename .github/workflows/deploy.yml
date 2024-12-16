@@ -30,22 +30,17 @@ jobs:
           done
           echo "Repository validation successful."
 
-      - name: Save Artifact
+      - name: Save Artifact Locally
         run: |
           mkdir -p artifacts
           zip -r artifacts/flask-app-$(date +%F).zip ./*
           echo "Artifact created: artifacts/flask-app-$(date +%F).zip"
 
-      - name: Commit and Push Artifact
-        env:
-          GH_PAT: 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
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git remote set-url origin https://${GH_PAT}@github.com/EmperorsChosen/lab-2-clouds.git
-          git add artifacts/
-          git commit -m "Add artifact: flask-app-$(date +%F).zip" || echo "No changes to commit"
-          git push origin main
+      - name: Upload Artifact to GitHub Actions
+        uses: actions/upload-artifact@v3
+        with:
+          name: flask-app-artifact
+          path: artifacts/
 
   # 2. Деплой інфраструктури через CloudFormation
   deploy_infrastructure:
@@ -123,5 +118,3 @@ jobs:
           echo "Testing website availability on port 5000..."
           curl -s -o /dev/null -w "%{http_code}" http://${{ env.PUBLIC_IP }}:5000 | grep 200 || (echo "Website not accessible"; exit 1)
           echo "Website is accessible and returned 200 status."
-
-
