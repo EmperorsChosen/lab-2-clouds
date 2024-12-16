@@ -97,6 +97,7 @@ jobs:
         run: |
           echo "Fetching current Public IP of EC2..."
           PUBLIC_IP=$(aws ec2 describe-instances \
+            --region us-east-1 \
             --filters "Name=tag:Name,Values=flask-app-instance" "Name=instance-state-name,Values=running" \
             --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
           if [ -z "$PUBLIC_IP" ]; then
@@ -105,6 +106,7 @@ jobs:
           fi
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
           echo "Public IP: $PUBLIC_IP"
+
 
       - name: Wait for EC2 Services
         run: |
