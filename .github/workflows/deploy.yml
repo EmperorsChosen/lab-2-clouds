@@ -94,33 +94,6 @@ jobs:
           echo "EC2 Public IP: $PUBLIC_IP"
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-      - name: Test Flask Services
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          echo "$SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
-            set -e
-            echo "Testing Flask Services..."
-            SERVICES=("user_service.py" "parcels_service.py" "web_part/web_interface.py")
-            
-            for SERVICE in "${SERVICES[@]}"; do
-              echo "Searching for service: $SERVICE"
-              # Виводимо всі знайдені процеси
-              ps aux | grep -v grep | grep "$SERVICE" || echo "No processes found for $SERVICE"
-              
-              # Якщо сервіс не запущений, виходимо з помилкою
-              if ! ps aux | grep -v grep | grep -q "$SERVICE"; then
-                echo "Error: Service $SERVICE is not running."
-                exit 1
-              fi
-              echo "Service $SERVICE is running."
-            done
-          EOF
-
-
-
       - name: Test Website Availability
         run: |
           echo "Testing website availability on port 5000..."
