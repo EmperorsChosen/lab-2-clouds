@@ -68,34 +68,47 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM
           echo "CloudFormation stack deployed successfully!"
 
+      - name: Get EC2 Public IP
+        id: get_public_ip
+        run: |
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=flask-app-instance" "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          echo "EC2 Public IP: $PUBLIC_IP"
+
   # 3. Тестування на EC2
   test_ec2_instance:
     name: Test EC2 Instance and Services
     needs: deploy_infrastructure
     runs-on: ubuntu-latest
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
     steps:
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Get EC2 Public IP
-        id: ec2_ip
+      - name: Setup SSH Key
         run: |
-          PUBLIC_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=flask-app-instance" "Name=instance-state-name,Values=running" \
-            --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
-          if [ -z "$PUBLIC_IP" ]; then
-            echo "Error: No running EC2 instance found!"
-            exit 1
-          fi
-          echo "EC2 Public IP: $PUBLIC_IP"
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          echo "SSH key setup completed."
+
+      - name: Wait for EC2 to Stabilize
+        run: |
+          echo "Waiting for services on EC2 to stabilize..."
+          sleep 180  # Чекаємо 3 хвилини
 
       - name: Test Website Availability
         run: |
-          echo "Testing website availability on port 5000..."
-          curl -s -o /dev/null -w "%{http_code}" http://${{ env.PUBLIC_IP }}:5000 | grep 200 || (echo "Website not accessible"; exit 1)
-          echo "Website is accessible and returned 200 status."
+          echo "Testing website availability..."
+          if ! curl -s --head --request GET http://${{ env.PUBLIC_IP }}:5000 | grep "200 OK" > /dev/null; then
+            echo "Error: Website is not accessible."
+            exit 1
+          fi
+          echo "Website is accessible!"
+
+      - name: Cleanup on Failure
+        if: failure()
+        run: |
+          echo "Tests failed! Deleting CloudFormation stack..."
+          aws cloudformation delete-stack --stack-name flask-app-stack
+          echo "Stack deletion initiated."
+
