@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check Directory Structure
         run: |
@@ -39,9 +37,12 @@ jobs:
           echo "Artifact created: artifacts/flask-app-$(date +%F).zip"
 
       - name: Commit and Push Artifact
+        env:
+          GH_PAT: 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
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://${GH_PAT}@github.com/EmperorsChosen/lab-2-clouds.git
           git add artifacts/
           git commit -m "Add artifact: flask-app-$(date +%F).zip" || echo "No changes to commit"
           git push origin main
@@ -98,19 +99,12 @@ jobs:
           echo "EC2 Public IP: $PUBLIC_IP"
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-      - name: Save Artifact Locally on EC2
+      - name: Test Flask Services
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-          scp -o StrictHostKeyChecking=no -i private_key.pem artifacts/flask-app-*.zip ubuntu@${{ env.PUBLIC_IP }}:/home/ubuntu/
-          echo "Artifact uploaded to EC2 instance."
-
-      - name: Test Flask Services
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
             set -e
             echo "Testing Flask Services..."
