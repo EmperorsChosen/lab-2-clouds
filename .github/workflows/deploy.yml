@@ -16,7 +16,7 @@ jobs:
 
       - name: Validate Repository Files
         run: |
-          REQUIRED_FILES=("user_service.py" "parcels_service.py" "requirements.txt" "web_interface.py")
+          REQUIRED_FILES=("user_service.py" "parcels_service.py" "requirements.txt" "web_part/web_interface.py")
           for FILE in "${REQUIRED_FILES[@]}"; do
             if [ ! -f "$FILE" ]; then
               echo "Error: Missing required file: $FILE"
@@ -84,7 +84,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
             set -e
             echo "Testing Flask Services..."
-            SERVICES=("user_service.py" "parcels_service.py" "web_interface.py")
+            SERVICES=("user_service.py" "parcels_service.py" "web_part/web_interface.py")
             for SERVICE in "${SERVICES[@]}"; do
               if ! pgrep -f "$SERVICE"; then
                 echo "Error: Service $SERVICE is not running."
