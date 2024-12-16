@@ -78,6 +78,7 @@ jobs:
           echo "EC2 Public IP: $PUBLIC_IP"
 
     # 3. Тестування на EC2
+    # 3. Тестування на EC2
   test_ec2_instance:
     name: Test EC2 Instance and Services
     needs: deploy_infrastructure
@@ -85,13 +86,19 @@ jobs:
     env:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
     steps:
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Setup SSH Key
         run: |
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           echo "SSH key setup completed."
 
-      # Повторне отримання Public IP
       - name: Retrieve EC2 Public IP
         id: get_ec2_ip
         run: |
@@ -107,11 +114,10 @@ jobs:
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
           echo "Public IP: $PUBLIC_IP"
 
-
       - name: Wait for EC2 Services
         run: |
           echo "Waiting for EC2 services to stabilize..."
-          sleep 100  # Чекаємо 3 хвилини
+          sleep 180  # Чекаємо 3 хвилини
 
       - name: Check Running Services on EC2
         run: |
@@ -146,3 +152,4 @@ jobs:
           echo "Tests failed! Deleting CloudFormation stack..."
           aws cloudformation delete-stack --stack-name flask-app-stack
           echo "Stack deletion initiated."
+
