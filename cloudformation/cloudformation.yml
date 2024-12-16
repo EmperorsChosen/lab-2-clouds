@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for Flask Application with EC2 and PostgreSQL Database on RDS
+
+Resources:
+  FlaskEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: test-keys
+      ImageId: ami-0866a3c8686eaeeba
+      SecurityGroupIds:
+        - !Ref FlaskSecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile  # Додаємо IAM Instance Profile
+      Tags:
+      - Key: Name
+        Value: flask-app-instance
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+
+          # Лог для статусу розгортання
+          LOG_FILE="/home/ubuntu/deployment_status.log"
+          echo "Deployment started: $(date)" > $LOG_FILE
+
+          # Оновлення системи
+          sudo apt update -y && echo "System updated successfully." >> $LOG_FILE
+          sudo apt install postgresql-client -y && echo "PostgreSQL client installed successfully." >> $LOG_FILE
+          sudo apt install -y python3 python3-pip git python3.12-venv && echo "Python and dependencies installed successfully." >> $LOG_FILE
+
+          # Встановлення AWS CLI
+          sudo apt install -y unzip
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install && echo "AWS CLI installed successfully." >> $LOG_FILE
+
+          # Встановлення CloudWatch Agent
+          sudo apt-get install -y wget
+          wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+          sudo dpkg -i amazon-cloudwatch-agent.deb && echo "CloudWatch Agent installed successfully." >> $LOG_FILE
+
+          # Налаштування CloudWatch Agent
+          sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/bin
+          sudo tee /opt/aws/amazon-cloudwatch-agent/bin/config.json > /dev/null <<EOT
+          {
+              "metrics": {
+                  "append_dimensions": {
+                      "InstanceId": "{instance_id}"
+                  },
+                  "metrics_collected": {
+                      "cpu": {
+                          "measurement": [
+                              "cpu_usage_idle",
+                              "cpu_usage_user",
+                              "cpu_usage_system"
+                          ],
+                          "metrics_collection_interval": 60
+                      },
+                      "mem": {
+                          "measurement": [
+                              "mem_used_percent"
+                          ],
+                          "metrics_collection_interval": 60
+                      },
+                      "disk": {
+                          "resources": [
+                              "/"
+                          ],
+                          "measurement": [
+                              "used_percent"
+                          ],
+                          "metrics_collection_interval": 60
+                      },
+                      "netstat": {
+                          "measurement": [
+                              "tcp_established",
+                              "tcp_time_wait"
+                          ],
+                          "metrics_collection_interval": 60
+                      }
+                  }
+              },
+              "logs": {
+                  "logs_collected": {
+                      "files": {
+                          "collect_list": [
+                              {
+                                  "file_path": "/home/ubuntu/user_service.log",
+                                  "log_group_name": "user_service_logs",
+                                  "log_stream_name": "{instance_id}"
+                              },
+                              {
+                                  "file_path": "/home/ubuntu/parcels_service.log",
+                                  "log_group_name": "parcels_service_logs",
+                                  "log_stream_name": "{instance_id}"
+                              },
+                              {
+                                  "file_path": "/home/ubuntu/web_interface.log",
+                                  "log_group_name": "web_interface_logs",
+                                  "log_stream_name": "{instance_id}"
+                              },
+                              {
+                                  "file_path": "/home/ubuntu/deployment_status.log",
+                                  "log_group_name": "deployment_status_logs",
+                                  "log_stream_name": "{instance_id}"
+                              }
+                          ]
+                      }
+                  }
+              }
+          }
+          EOT
+
+          # Запуск CloudWatch Agent
+          sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+              -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s && echo "CloudWatch Agent configured successfully." >> $LOG_FILE
+
+          # Клонування проекту
+          git clone https://github.com/EmperorsChosen/lab-2-clouds.git /home/ubuntu/lab-2-clouds && echo "Project cloned successfully." >> $LOG_FILE
+          cd /home/ubuntu/lab-2-clouds
+
+          # Налаштування user_service
+          python3 -m venv venv_user
+          source venv_user/bin/activate
+          pip install -r requirements.txt && echo "user_service dependencies installed successfully." >> $LOG_FILE
+          nohup python3 user_service.py > /home/ubuntu/user_service.log 2>&1 &
+          deactivate
+
+          # Налаштування parcels_service
+          python3 -m venv venv_parcel
+          source venv_parcel/bin/activate
+          pip install -r requirements.txt && echo "parcels_service dependencies installed successfully." >> $LOG_FILE
+          nohup python3 parcels_service.py > /home/ubuntu/parcels_service.log 2>&1 &
+          deactivate
+
+          # Налаштування web_interface
+          cd web_part
+          python3 -m venv venv_web
+          source venv_web/bin/activate
+          pip install -r ../requirements.txt && echo "web_part dependencies installed successfully." >> $LOG_FILE
+
+          # Встановлення параметрів RDS у Flask
+          sed -i "s|postgresql://flask_user:12345@localhost:5432/parcels_db|postgresql://flask_user:unevum86WWII@parcels-db.cdcwqigywyvd.us-east-1.rds.amazonaws.com:5432/parcels_db|g" /home/ubuntu/lab-2-clouds/parcels_service.py
+          sed -i "s|postgresql://flask_user:12345@localhost:5432/parcels_db|postgresql://flask_user:unevum86WWII@parcels-db.cdcwqigywyvd.us-east-1.rds.amazonaws.com:5432/parcels_db|g" /home/ubuntu/lab-2-clouds/web_part/web_interface.py
+
+          nohup python3 web_interface.py > /home/ubuntu/web_interface.log 2>&1 &
+          deactivate
+
+          echo "Deployment completed: $(date)" >> $LOG_FILE
+
+  FlaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP, HTTPS, and Flask services access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5002
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2CloudWatchRole
+
+  EC2CloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: EC2-CloudWatch-Role-Guardian
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+
+Outputs:
+  InstancePublicIP:
+    Description: Public IP of the Flask EC2 instance
+    Value: !GetAtt FlaskEC2Instance.PublicIp
