@@ -13,6 +13,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Directory Structure
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
 
       - name: Validate Repository Files
         run: |
@@ -26,11 +33,18 @@ jobs:
           echo "Repository validation successful."
 
       - name: Save Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: flask-app-artifact
-          path: .
-          retention-days: 1
+        run: |
+          mkdir -p artifacts
+          zip -r artifacts/flask-app-$(date +%F).zip ./*
+          echo "Artifact created: artifacts/flask-app-$(date +%F).zip"
+
+      - name: Commit and Push Artifact
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add artifacts/
+          git commit -m "Add artifact: flask-app-$(date +%F).zip" || echo "No changes to commit"
+          git push origin main
 
   # 2. Деплой інфраструктури через CloudFormation
   deploy_infrastructure:
@@ -38,6 +52,9 @@ jobs:
     needs: clone_and_validate
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -48,11 +65,12 @@ jobs:
       - name: Deploy CloudFormation Stack
         id: cloudformation_deploy
         run: |
-           cd cloudformation  # Переходимо в папку, де знаходиться файл
-           aws cloudformation deploy \
-            --template-file cloudformation.yml \
+          echo "Deploying CloudFormation stack..."
+          aws cloudformation deploy \
+            --template-file cloudformation/cloudformation.yml \
             --stack-name flask-app-stack \
             --capabilities CAPABILITY_NAMED_IAM
+          echo "CloudFormation stack deployed successfully!"
 
   # 3. Тестування на EC2
   test_ec2_instance:
@@ -73,15 +91,26 @@ jobs:
           PUBLIC_IP=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=flask-app-instance" "Name=instance-state-name,Values=running" \
             --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          if [ -z "$PUBLIC_IP" ]; then
+            echo "Error: No running EC2 instance found!"
+            exit 1
+          fi
           echo "EC2 Public IP: $PUBLIC_IP"
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-      - name: Test Flask Services
+      - name: Save Artifact Locally on EC2
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
+          scp -o StrictHostKeyChecking=no -i private_key.pem artifacts/flask-app-*.zip ubuntu@${{ env.PUBLIC_IP }}:/home/ubuntu/
+          echo "Artifact uploaded to EC2 instance."
+
+      - name: Test Flask Services
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
             set -e
             echo "Testing Flask Services..."
@@ -97,6 +126,8 @@ jobs:
 
       - name: Test Website Availability
         run: |
+          echo "Testing website availability on port 5000..."
           curl -s -o /dev/null -w "%{http_code}" http://${{ env.PUBLIC_IP }}:5000 | grep 200 || (echo "Website not accessible"; exit 1)
           echo "Website is accessible and returned 200 status."
+
 
