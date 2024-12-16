@@ -46,10 +46,11 @@ jobs:
           aws-region: us-east-1
 
       - name: Deploy CloudFormation Stack
-        id: deploy_stack
+        id: cloudformation_deploy
         run: |
-          aws cloudformation deploy \
-            --template-file cloudformation/cloudformation.yml \
+           cd cloudformation  # Переходимо в папку, де знаходиться файл
+           aws cloudformation deploy \
+            --template-file cloudformation.yml \
             --stack-name flask-app-stack \
             --capabilities CAPABILITY_NAMED_IAM
 
