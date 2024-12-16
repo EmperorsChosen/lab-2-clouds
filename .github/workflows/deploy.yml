@@ -1,0 +1,69 @@
+name: CI/CD Pipeline for Flask AWS Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Клонування репозиторію
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 2. Встановлення AWS CLI
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y unzip
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      # 3. Налаштування AWS Credentials
+      - name: Configure AWS Credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set default.region us-east-1
+
+      # 4. Деплой CloudFormation для створення інфраструктури
+      - name: Deploy CloudFormation Stack
+        run: |
+          aws cloudformation deploy \
+            --template-file cloudformation.yml \
+            --stack-name flask-app-stack \
+            --capabilities CAPABILITY_NAMED_IAM
+
+      # 5. Отримання Public IP EC2-інстансу за тегом
+      - name: Get EC2 Public IP
+        id: ec2_ip
+        run: |
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=flask-app-instance" "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+          echo "EC2 Public IP: $PUBLIC_IP"
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+      # 6. Підключення до EC2 та перевірка сервісів
+      - name: Deploy Application on EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
+            echo "Connecting to EC2 instance..."
+            cd /home/ubuntu/lab-2-clouds
+            git pull
+            echo "Project updated!"
+            ps aux | grep python
+            echo "Deployment complete!"
+          EOF
