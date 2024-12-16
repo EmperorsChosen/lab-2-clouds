@@ -104,14 +104,22 @@ jobs:
             set -e
             echo "Testing Flask Services..."
             SERVICES=("user_service.py" "parcels_service.py" "web_part/web_interface.py")
+            
             for SERVICE in "${SERVICES[@]}"; do
-              if ! pgrep -f "$SERVICE"; then
+              echo "Searching for service: $SERVICE"
+              # Виводимо всі знайдені процеси
+              ps aux | grep -v grep | grep "$SERVICE" || echo "No processes found for $SERVICE"
+              
+              # Якщо сервіс не запущений, виходимо з помилкою
+              if ! ps aux | grep -v grep | grep -q "$SERVICE"; then
                 echo "Error: Service $SERVICE is not running."
                 exit 1
               fi
+              echo "Service $SERVICE is running."
             done
-            echo "All services are running successfully."
           EOF
+
+
 
       - name: Test Website Availability
         run: |
